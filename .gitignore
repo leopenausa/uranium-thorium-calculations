@@ -1,0 +1,43 @@
+# Large pre-computed grid files
+*.hkl
+*.txt
+
+# Output files
+results.*
+exported_ages_*.csv
+data_to_plot.csv
+UTh_report_example.pdf
+
+# Lab session data (keep only the example file)
+05032025*
+14032024*
+24032026*
+31032025*
+080925*
+file.txt
+
+# Old notebook versions
+UTh_age_v0*.ipynb
+UTh_age_v0_9.ipynb
+Isotope_classes.ipynb
+
+# Dead code
+init_230_232Th_a.py
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Claude Code internals
+.agents/
+.claude/
+.memsearch/
+CLAUDE.md
+skills-lock.json
+
+# macOS
+.DS_Store
