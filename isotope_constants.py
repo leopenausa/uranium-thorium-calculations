@@ -1,4 +1,5 @@
-# Define desintegration constants (check correction factors)
+# Decay constants — Cheng et al. (2013) Quat. Geochronol. 20, 142–158
+# Correction factors applied to λ₂₃₄ (×0.9985) and λ₂₃₀ (×1.0014) per same reference.
 lambda_230 = 0.0000091577 * 1.0014
 lambda_232 = 0.000000000049475
 lambda_234 = 0.0000028263 * 0.9985

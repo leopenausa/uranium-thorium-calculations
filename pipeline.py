@@ -10,7 +10,7 @@ import multiprocessing as mp
 import numpy as np
 import pandas as pd
 
-from isotope_constants import lambda_234, lambda_238, U238_atom
+from isotope_constants import lambda_234, lambda_238, U238_atom, Th232_atom
 from age_calc_Th230_U238_CS import age_calc_Th230_U238_CS
 from m_Th230_U238_a_from_concs import m_Th230_U238_a_from_concs
 from workers import workers, Measurement
@@ -80,6 +80,13 @@ def _add_derived(df):
     df['Th232_pmol']     = df['Th232_Th230'] * df['Th230_pmolg']
     df['Th232_err']      = df['Th232_Th230_err'] * df['Th230_pmolg']
 
+    df['Th232_ppt']          = df['Th232_pmol'] * Th232_atom
+    df['Th232_ppt_err']      = df['Th232_err']  * Th232_atom
+
+    R = 1.0 / df['Th232_Th230']
+    df['Th230_Th232_1e6']     = R * 1e6
+    df['Th230_Th232_1e6_err'] = (df['Th232_Th230_err'] / df['Th232_Th230'] ** 2) * 1e6
+
     df['delta_234U']     = (df['U234_U238'] / ratio_eq - 1) * 1000
     df['delta_234U_err'] = (df['U234_U238_err'] / ratio_eq) * 1000
 
@@ -102,7 +109,8 @@ def run_mc(row, n_walks=10000, T_est=0):
 
     Returns
     -------
-    (age_mean, age_2sigma) in years, or (None, None) if solver always exceeds MAX_AGE
+    (age_uncorr, err_uncorr, age_corr, err_corr) in years,
+    or (None, None, None, None) if solver always exceeds MAX_AGE
     """
     u238  = Measurement(row['U238_ppb'],      row['U238_rsd'],        'rsd')
     th230 = Measurement(row['Th230_pmolg'],   row['Th230_pmolg_err'], 'absolute')
@@ -115,19 +123,28 @@ def run_mc(row, n_walks=10000, T_est=0):
         if T_est is None:
             T_est = 500_000
 
-    age_MC = []
+    age_MC_uncorr, age_MC_corr = [], []
+
+    def _cb(result):
+        u, c = result
+        age_MC_uncorr.append(u)
+        age_MC_corr.append(c)
 
     pool = mp.Pool(mp.cpu_count())
     for _ in range(n_walks):
         pool.apply_async(
             workers,
             args=(u238, th230, th232, d234u, T_est),
-            callback=age_MC.append,
+            callback=_cb,
         )
     pool.close()
     pool.join()
 
-    valid = [a for a in age_MC if a is not None]
-    if not valid:
-        return None, None
-    return int(np.mean(valid)), int(np.std(valid) * 2)
+    valid_u = [a for a in age_MC_uncorr if a is not None]
+    valid_c = [a for a in age_MC_corr   if a is not None]
+    if not valid_c:
+        return None, None, None, None
+    return (
+        int(np.mean(valid_u)), int(np.std(valid_u) * 2),
+        int(np.mean(valid_c)), int(np.std(valid_c) * 2),
+    )

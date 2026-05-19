@@ -29,8 +29,9 @@ def workers(u238, th230, th232, d234u, T_est=0):
     )
 
     ini_230_238_a = m_Th230_U238_a_from_concs(Th230_pmol, U238_ppb)
-    ini_Yr = age_calc_Th230_U238_CS(T_est, ini_230_238_a, m_d234)
+    age_uncorr = age_calc_Th230_U238_CS(T_est, ini_230_238_a, m_d234)
 
+    ini_Yr = age_uncorr
     for _ in range(DETRITAL_CORRECTION_ITERS):
         if ini_Yr is None:
             break
@@ -39,4 +40,4 @@ def workers(u238, th230, th232, d234u, T_est=0):
         ini_230_238_a = m_Th230_U238_a_from_concs(conc_230, U238_ppb)
         ini_Yr = age_calc_Th230_U238_CS(ini_Yr, ini_230_238_a, m_d234)
 
-    return ini_Yr
+    return (age_uncorr, ini_Yr)
